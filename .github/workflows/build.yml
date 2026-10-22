@@ -1,0 +1,116 @@
+# Builds LinkDesk for Windows, macOS, Linux and Android, for free on GitHub.
+# Run it from the Actions tab ("Run workflow"). When it finishes, the files are
+# attached to a new release on the repository's Releases page.
+name: Build LinkDesk
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Point the app at this repository's web page
+        shell: bash
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          WEB="https://$OWNER.github.io/${{ github.event.repository.name }}/"
+          python - "$WEB" <<'EOF'
+          import pathlib, sys
+          p = pathlib.Path("app/core.py")
+          p.write_text(p.read_text().replace("https://YOUR-USERNAME.github.io/linkdesk/", sys.argv[1], 1))
+          EOF
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt pyinstaller
+
+      - name: Build
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --name LinkDesk \
+            --collect-all aiortc --collect-all aioice \
+            --hidden-import websockets.asyncio.client \
+            --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 \
+            --hidden-import pynput.keyboard._darwin --hidden-import pynput.mouse._darwin \
+            --hidden-import pynput.keyboard._xorg --hidden-import pynput.mouse._xorg \
+            app/linkdesk.py
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir out
+          case "${{ runner.os }}" in
+            Windows) cp dist/LinkDesk.exe out/LinkDesk-Windows.exe ;;
+            macOS)   (cd dist && zip -qr ../out/LinkDesk-Mac.zip LinkDesk.app) ;;
+            Linux)   cp dist/LinkDesk out/LinkDesk-Linux ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ runner.os }}
+          path: out/*
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build APK
+        run: |
+          cp docs/peerjs.min.js android/app/src/main/assets/peerjs.min.js
+          gradle -p android assembleRelease --no-daemon
+          mkdir out && cp android/app/build/outputs/apk/release/app-release.apk out/LinkDesk-Android.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: out/*
+
+  release:
+    needs: [desktop, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v2.0.{0}', github.run_number) }}
+          name: LinkDesk ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v2.0.{0}', github.run_number) }}
+          make_latest: true
+          body: |
+            **Control a device:** open https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ in any browser (phone, tablet or computer).
+            **Let a device be controlled:** download the file for it below.
+            - Windows: LinkDesk-Windows.exe
+            - Mac: LinkDesk-Mac.zip (unzip, right-click LinkDesk → Open)
+            - Linux: LinkDesk-Linux (chmod +x, then run)
+            - Android: LinkDesk-Android.apk (allow "Install unknown apps" when asked)
+          files: files/*
