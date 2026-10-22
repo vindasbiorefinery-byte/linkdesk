@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_description">Lets a person you accepted in LinkDesk tap, swipe and type on this phone during a session. LinkDesk only acts while you have accepted a session and screen sharing is on, and you can disconnect at any time.</string>
+</resources>

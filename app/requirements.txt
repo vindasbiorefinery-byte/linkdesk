@@ -1,0 +1,5 @@
+aiortc>=1.9
+websockets>=13,<18
+mss>=9
+pynput>=1.7.6
+Pillow>=10

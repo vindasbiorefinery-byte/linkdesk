@@ -1,0 +1,39 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'io.linkdesk.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'io.linkdesk.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 2
+        versionName '2.0.0'
+    }
+
+    signingConfigs {
+        // Shared signing key so new versions install over old ones. For a public
+        // release, replace linkdesk.keystore with your own private key.
+        linkdesk {
+            storeFile file('linkdesk.keystore')
+            storePassword 'linkdesk'
+            keyAlias 'linkdesk'
+            keyPassword 'linkdesk'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.linkdesk
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

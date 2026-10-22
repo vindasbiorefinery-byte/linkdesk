@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LinkDesk</title>
+<style>
+:root{--bg:#f3f5fa;--card:#fff;--line:#dfe4ef;--fg:#111a2c;--muted:#5f6b85;--accent:#2457e6;--accent-fg:#fff;--ok:#11895a;--bad:#cf2f24;--warn:#b4620a}
+@media (prefers-color-scheme:dark){:root{--bg:#0c111d;--card:#141b2b;--line:#263049;--fg:#e7ecf7;--muted:#97a2bd;--accent:#7ea2ff;--accent-fg:#0c111d;--ok:#5fd39c;--bad:#ff7a70;--warn:#f0a54a;color-scheme:dark}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,Roboto,sans-serif}
+main{max-width:480px;margin:0 auto;padding:20px 16px 32px;display:flex;flex-direction:column;gap:14px}
+.brand{font-weight:700;font-size:20px;color:var(--accent)}.brand small{font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.id{font:700 34px/1.1 ui-monospace,"Roboto Mono",monospace;letter-spacing:.04em}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:0;border-radius:8px;padding:10px 14px;font:600 14px system-ui,Roboto,sans-serif;background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.red{background:#c3362b;color:#fff}
+.status{font-size:13.5px}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.tip{font-size:13.5px;color:var(--muted);margin:0}
+.live{background:#2a0f12;color:#ffb4ab;border-color:#5b2228}
+.live b{color:#ff8a80}
+.modal{position:fixed;inset:0;background:rgba(8,12,24,.6);display:grid;place-items:center;padding:16px;z-index:5}
+.modal .card{max-width:420px;width:100%}
+#log{max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:6px;font-size:14px}
+#log .me b{color:var(--accent)}#log .them b{color:var(--ok)}#log .note{color:var(--muted);font-style:italic;font-size:13px}
+form{display:flex;gap:6px}input[type=text]{flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">LinkDesk<small>for Android · free</small></div>
+
+  <section class="card">
+    <div class="label">This phone's ID</div>
+    <div class="row"><div class="id" id="myId">— — —</div></div>
+    <div class="status warn" id="status">● Connecting…</div>
+    <p class="tip">Share this ID with someone you trust. They open LinkDesk in any browser and type it in. You'll be asked to accept, and Android will ask you to allow screen sharing.</p>
+    <div class="row"><button class="btn ghost" id="copyBtn" type="button">Copy ID</button></div>
+  </section>
+
+  <section class="card">
+    <div class="label">Remote control permission</div>
+    <div class="status" id="ctl"></div>
+    <p class="tip" id="ctlTip">Without it they can see your screen but not tap or type. Settings → Accessibility → LinkDesk → On.</p>
+    <div class="row"><button class="btn ghost" id="ctlBtn" type="button">Open Accessibility settings</button></div>
+  </section>
+
+  <section class="card live" id="liveCard" hidden>
+    <div><b>● <span id="liveWho"></span> is controlling this phone</b></div>
+    <div id="log"></div>
+    <form id="chatForm"><input type="text" id="chatInput" placeholder="Message" autocomplete="off"><button class="btn" type="submit">Send</button></form>
+    <div class="row"><button class="btn ghost" id="fileBtn" type="button" style="color:#ffb4ab">Send file</button><button class="btn red" id="endBtn" type="button">Disconnect</button></div>
+    <input type="file" id="filePick" hidden>
+  </section>
+  <p class="tip" id="msg"></p>
+</main>
+
+<div class="modal" id="ask" hidden>
+  <div class="card">
+    <strong style="font-size:17px">Someone wants to control this phone</strong>
+    <div>From: <span id="askWho"></span></div>
+    <p class="tip">They will see your screen and can tap and type. Only accept if you know and trust this person.</p>
+    <div class="tip" id="askTimer"></div>
+    <div class="row" style="justify-content:flex-end"><button class="btn ghost" id="declineBtn" type="button">Decline</button><button class="btn" id="acceptBtn" type="button">Accept</button></div>
+  </div>
+</div>
+
+<script src="peerjs.min.js"></script>
+<script src="host.js"></script>
+</body>
+</html>

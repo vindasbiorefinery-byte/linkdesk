@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a33">
+<title>LinkDesk</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232457e6'/%3E%3Cpath d='M9 10h14v9H9z' fill='none' stroke='white' stroke-width='2.5'/%3E%3Cpath d='M13 23h6' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f3f5fa; --card:#fff; --line:#dfe4ef; --fg:#111a2c; --muted:#5f6b85;
+  --accent:#2457e6; --accent-fg:#fff; --ok:#11895a; --bad:#cf2f24;
+  --stage:#0b1020; --bar:#121a33; --bar-fg:#e6ecfb; --bar-btn:#1f2a4d;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --mono:ui-monospace,"SF Mono",Consolas,"Roboto Mono",monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0c111d; --card:#141b2b; --line:#263049; --fg:#e7ecf7; --muted:#97a2bd;
+  --accent:#7ea2ff; --accent-fg:#0c111d; --ok:#5fd39c; --bad:#ff7a70; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);-webkit-tap-highlight-color:transparent}
+button,input{font:inherit}
+.home{max-width:440px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 32px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;color:var(--accent)}
+.brand small{font-weight:400;font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+label{font-size:13px;font-weight:600;display:flex;flex-direction:column;gap:6px}
+input[type=text],input[type=password],input[type=tel]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+#peerId{font:600 22px/1.2 var(--mono);letter-spacing:.06em}
+input:focus-visible,button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:1px}
+.btn{border:0;border-radius:8px;padding:11px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-fg)}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.msg{font-size:13.5px;color:var(--muted);min-height:1.5em}
+.msg.bad{color:var(--bad)}
+.tip{font-size:13px;color:var(--muted)}
+.tip b{color:var(--fg)}
+.recent{display:flex;flex-wrap:wrap;gap:6px}
+.recent button{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;padding:4px 9px;font:13px var(--mono);cursor:pointer}
+
+/* session */
+.session{position:fixed;inset:0;background:var(--stage);display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;padding:calc(6px + env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));background:var(--bar);color:var(--bar-fg)}
+.bar .who{font-weight:600;font-size:13px;color:#7ee2a8;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bar button{background:var(--bar-btn);color:var(--bar-fg);border:0;border-radius:6px;padding:7px 9px;font-size:13px;cursor:pointer;flex:none}
+.bar button.end{background:#c3362b;color:#fff}
+.bar button[aria-pressed=true]{background:#2457e6;color:#fff}
+.stage{flex:1;position:relative;overflow:hidden;touch-action:none}
+#screen{position:absolute;background:#000;image-rendering:auto;cursor:default}
+.wait{position:absolute;inset:0;display:grid;place-items:center;color:#9aa4c3;font-size:14px;text-align:center;padding:16px}
+.navbar{display:flex;justify-content:center;gap:28px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:var(--bar)}
+.navbar button{background:transparent;border:0;color:var(--bar-fg);font-size:14px;padding:6px 14px;cursor:pointer}
+#kbd{position:absolute;opacity:0;left:-1000px;top:0;width:10px;height:10px}
+
+.panel{position:fixed;right:max(10px,env(safe-area-inset-right));bottom:calc(10px + env(safe-area-inset-bottom));width:min(360px,calc(100vw - 20px));height:min(420px,60vh);background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.35);z-index:5}
+.panel header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600}
+.panel header button{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer}
+#log{flex:1;overflow:auto;padding:10px 12px;font-size:14px;display:flex;flex-direction:column;gap:8px;min-height:0}
+#log .me b{color:var(--accent)} #log .them b{color:var(--ok)} #log .note{color:var(--muted);font-style:italic;font-size:13px}
+#log a{color:var(--accent)}
+.panel form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}
+.panel form input{flex:1;min-width:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom));background:#111a2c;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;z-index:9;max-width:90vw}
+</style>
+</head>
+<body>
+
+<main class="home" id="home">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2457e6"/><path d="M9 10h14v9H9z" fill="none" stroke="white" stroke-width="2.5"/><path d="M13 23h6" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+    LinkDesk <small>free remote control</small>
+  </div>
+
+  <form class="card" id="connectForm" autocomplete="off">
+    <div class="label">Control a computer or Android phone</div>
+    <label for="peerId">Partner ID
+      <input type="tel" id="peerId" inputmode="numeric" placeholder="123 456 789" maxlength="11" required>
+    </label>
+    <label for="peerPw"><span>Unattended password <span class="tip">(optional)</span></span>
+      <input type="password" id="peerPw" autocomplete="current-password">
+    </label>
+    <button class="btn" id="connectBtn" type="submit">Connect</button>
+    <div class="msg" id="msg" role="status"></div>
+    <div class="recent" id="recent"></div>
+  </form>
+
+  <div class="card">
+    <div class="label">Let someone control your device</div>
+    <p class="tip" style="margin:0">Install the free LinkDesk app on the device that will be controlled. It shows a 9-digit ID. Share that ID with the person helping you.</p>
+    <p class="tip" style="margin:0"><b>Windows, Mac, Linux, Android:</b> <a id="dl" href="#" style="color:var(--accent)">download LinkDesk</a>. iPhone and iPad can control other devices from this page, but Apple doesn't allow them to be controlled.</p>
+  </div>
+</main>
+
+<section class="session" id="session" hidden>
+  <div class="bar">
+    <span class="who" id="who">Connecting…</span>
+    <button type="button" id="kbdBtn" title="Keyboard">⌨</button>
+    <button type="button" id="chatBtn">Chat</button>
+    <button type="button" id="fileBtn" title="Send file">File</button>
+    <button type="button" id="zoomBtn" title="Zoom">1×</button>
+    <button type="button" id="fsBtn" title="Full screen">⛶</button>
+    <button type="button" class="end" id="endBtn">End</button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="screen" width="2" height="2"></canvas>
+    <div class="wait" id="wait">Waiting for the partner to accept…</div>
+    <input id="kbd" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Type on remote device">
+  </div>
+  <div class="navbar" id="navbar" hidden>
+    <button type="button" data-nav="back">◀ Back</button>
+    <button type="button" data-nav="home">● Home</button>
+    <button type="button" data-nav="recents">■ Apps</button>
+  </div>
+  <input type="file" id="filePick" hidden>
+</section>
+
+<aside class="panel" id="chat" hidden>
+  <header>Chat <button type="button" id="chatClose" aria-label="Close chat">✕</button></header>
+  <div id="log"></div>
+  <form id="chatForm"><input type="text" id="chatInput" placeholder="Message" autocomplete="off"><button class="btn" type="submit">Send</button></form>
+</aside>
+
+<script src="peerjs.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
